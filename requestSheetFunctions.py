@@ -1,6 +1,7 @@
 import sys
 import numpy as np
 import pandas as pd
+import math
 from astropy.coordinates import SkyCoord
 import astropy.units as u
 import astropy as apy
@@ -29,13 +30,14 @@ class Request():
         self.epoch = None
 
         # Host star info
-        self.Vmag = None
+        self.Jmag = None
         self.Teff = None
 
         #Observation info
         self.nominal_ExpTime = None
         self.max_ExpTime = None
         self.simulcal = None
+        self.eventWindow = None
 
         #Cadence info
         self.n_observations_per_visit = None
@@ -46,6 +48,24 @@ class Request():
 
         #stats
         self.total_observations_requested = None
+
+    def get_single_shot(self):
+        self.get_star_info()
+        #Cadence info
+        self.n_observations_per_visit = 1
+        self.n_visits_per_night = 1
+        self.n_unique_nights_per_semester = 1
+        self.intra_night_cadence = 0.0
+        self.inter_night_cadence = 0
+
+    def get_RM(self):
+        self.get_star_info()
+        #Cadence info
+        self.n_observations_per_visit = math.ceil((self.eventWindow*3600)/self.nominal_ExpTime)
+        self.n_visits_per_night = 1
+        self.n_unique_nights_per_semester = 1
+        self.intra_night_cadence = 0.0
+        self.inter_night_cadence = 0
 
     # Function to retrieve basic coordinate info from SIMBAD
     def get_star_info(self):
@@ -65,9 +85,7 @@ class Request():
             identifiers_section = False
             bibcodes_section = False
             all_names = []
-
             for line in lines:
-    #             print(line)
                 if line.startswith('Bib'):
                     bibcodes_section = True
                 if line.startswith('Identifiers ('):
@@ -76,6 +94,9 @@ class Request():
                     coords = line.split(': ')[1].split()
                     ra, dec = ' '.join(coords[:3]), ' '.join(coords[3:])
                     pm_epoch = line.split('=')[1].strip()[:5]
+
+                elif line.startswith('Flux J'):
+                    j_mag = float(line.split(' ')[3].strip())
                 elif line.startswith('Proper motions'):
                     pm_values = line.split(':')[1].split()[:2]
                     pm_ra, pm_dec = float(pm_values[0]), float(pm_values[1])
@@ -120,6 +141,7 @@ class Request():
                 self.pmRA = pm_ra
                 self.pmDec = pm_dec
                 self.epoch = pm_epoch
+                self.Jmag = j_mag
                 # Convert SIMBAD default RA and Dec format to decimal format
                 c = SkyCoord(ra=self.RA, dec=self.Dec, unit=(u.hourangle, u.deg))
                 ra_angle = c.ra.deg
@@ -229,7 +251,7 @@ class Request():
                          "pmRA":self.pmRA,
                          "pmDec":self.pmDec,
                          "Epoch":self.epoch,
-                         "Vmag":self.Vmag,
+                         "Jmag":self.Jmag,
                          "Teff":self.Teff,
                          "Nominal ExpTime":self.nominal_ExpTime,
                          "Max ExpTime":self.max_ExpTime,
@@ -349,7 +371,7 @@ class Program():
         if self.allGood:
 
             with open(self.savefile,'w') as fileout:
-                fileout.write("Name,Gaia_ID,TIC_ID,Program_Code,RA,Dec,pmRA,pmDec,Epoch,Vmag,Teff,Nominal_ExpTime,Max_ExpTime,\
+                fileout.write("Name,Gaia_ID,TIC_ID,Program_Code,RA,Dec,pmRA,pmDec,Epoch,Jmag,Teff,Nominal_ExpTime,Max_ExpTime,\
                               Simulcal,Total_Observations_Requested,N_Observations_per_Visit,N_Visits_per_Night, \
                               Intra_Night_Cadence,N_Unique_Nights,Inter_Night_Cadence,Total_Time_for_Target_Seconds,Total_Time_for_Target_Hours" + "\n")
 
@@ -359,7 +381,7 @@ class Program():
                     str(self.requests[r].RA) + "," + str(self.requests[r].Dec) + "," + \
                     str(self.requests[r].pmRA) + "," + str(self.requests[r].pmDec) + "," + \
                     str(self.requests[r].epoch) + "," + \
-                    str(self.requests[r].Vmag) + "," + str(self.requests[r].Teff) + "," + \
+                    str(self.requests[r].Jmag) + "," + str(self.requests[r].Teff) + "," + \
                     str(self.requests[r].nominal_ExpTime) + "," + str(self.requests[r].max_ExpTime) + "," + \
                     str(self.requests[r].simulcal) + "," + \
                     str(self.requests[r].total_observations_requested) + "," + str(self.requests[r].n_observations_per_visit) + "," + \
