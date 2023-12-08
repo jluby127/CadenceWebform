@@ -8,4 +8,6 @@ There are three files:
 
 Download a version of these three files to your local machine, but you will only need to interact with the buildProgram.ipynb file. Using buildProgram.ipynb as an example, follow instructions within the notebook on how to use. When complete, email jblubin@astro.ucla.edu with your program request in a csv file. 
 
+Note: to use this notebook, you must have installed both astropy and astroplan. 
+
 Similarly, reach out to jblubin@astro.ucla.edu with any questions.
