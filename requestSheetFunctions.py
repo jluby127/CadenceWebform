@@ -342,7 +342,7 @@ class Program():
         self.requests = requests
 
         # admin
-        self.initials = None
+        self.code = None
         self.semester = None
         self.savefile = None
 
@@ -385,7 +385,7 @@ class Program():
 
                 for r in range(len(self.requests)):
 
-                    line = str(self.requests[r].simbad_name) + "," + str(self.requests[r].gaia_name) + "," + str(self.requests[r].tic) + "," + str(self.initials) + "," + \
+                    line = str(self.requests[r].simbad_name) + "," + str(self.requests[r].gaia_name) + "," + str(self.requests[r].tic) + "," + str(self.code) + "," + \
                     str(self.requests[r].RA) + "," + str(self.requests[r].Dec) + "," + \
                     str(self.requests[r].pmRA) + "," + str(self.requests[r].pmDec) + "," + \
                     str(self.requests[r].epoch) + "," + \
