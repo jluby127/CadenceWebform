@@ -85,6 +85,8 @@ class Request():
             identifiers_section = False
             bibcodes_section = False
             all_names = []
+
+            j_mag = None
             for line in lines:
                 if line.startswith('Bib'):
                     bibcodes_section = True
@@ -217,11 +219,19 @@ class Request():
                     semesterly_observability_matrix.append(0)
 
         self.observability = semesterly_observability_matrix
-        self.first_observable = semesterly_observability_matrix.index(1)
-        self.last_observable = len(semesterly_observability_matrix) - 1 - semesterly_observability_matrix[::-1].index(1)
-        self.days_observable = self.last_observable - self.first_observable
-        print("This target is observable for a total of [" + str(self.days_observable) + "] days this semester.")
-        print("This target rises on day [" + str(self.first_observable) + "] and sets on day [" + str(self.last_observable) + "] of the semester. \n")
+        if np.sum(self.observability) >= 1:
+            self.first_observable = semesterly_observability_matrix.index(1)
+            self.last_observable = len(semesterly_observability_matrix) - 1 - semesterly_observability_matrix[::-1].index(1)
+            self.days_observable = self.last_observable - self.first_observable
+            print("This target is observable for a total of [" + str(self.days_observable) + "] days this semester.")
+            print("This target rises on day [" + str(self.first_observable) + "] and sets on day [" + str(self.last_observable) + "] of the semester. \n")
+            if self.days_observable <= 30:
+                print("Further warning: this target is hardly accessible from Hawaii (accessible for less than 30 days this semester).")
+        else:
+            print("WARNING: this target is not accessible from Hawaii at all.")
+            self.first_observable = 0
+            self.last_observable = 0
+            self.days_observable = 0
 
     def determineFeasibility(self):
 
@@ -371,9 +381,7 @@ class Program():
         if self.allGood:
 
             with open(self.savefile,'w') as fileout:
-                fileout.write("Name,Gaia_ID,TIC_ID,Program_Code,RA,Dec,pmRA,pmDec,Epoch,Jmag,Teff,Nominal_ExpTime,Max_ExpTime,\
-                              Simulcal,Total_Observations_Requested,N_Observations_per_Visit,N_Visits_per_Night, \
-                              Intra_Night_Cadence,N_Unique_Nights,Inter_Night_Cadence,Total_Time_for_Target_Seconds,Total_Time_for_Target_Hours" + "\n")
+                fileout.write("Name,Gaia_ID,TIC_ID,Program_Code,RA,Dec,pmRA,pmDec,Epoch,Jmag,Teff,Nominal_ExpTime,Max_ExpTime,Simulcal,Total_Observations_Requested,N_Observations_per_Visit,N_Visits_per_Night,Intra_Night_Cadence,N_Unique_Nights,Inter_Night_Cadence,Total_Time_for_Target_Seconds,Total_Time_for_Target_Hours" + "\n")
 
                 for r in range(len(self.requests)):
 
