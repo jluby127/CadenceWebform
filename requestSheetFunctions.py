@@ -46,6 +46,12 @@ class Request():
         self.intra_night_cadence = None
         self.inter_night_cadence = None
 
+        #Additional info (optional)
+        self.startDate = None
+        self.endDate = None
+        self.mustDate = None
+        self.notes = None
+
         #stats
         self.total_observations_requested = None
 
@@ -61,7 +67,7 @@ class Request():
     def get_RM(self):
         self.get_star_info()
         #Cadence info
-        self.n_observations_per_visit = math.ceil((self.eventWindow*3600)/self.nominal_ExpTime)
+        self.n_observations_per_visit = math.ceil((self.eventWindow*3600)/(self.nominal_ExpTime + 45))
         self.n_visits_per_night = 1
         self.n_unique_nights_per_semester = 1
         self.intra_night_cadence = 0.0
@@ -154,6 +160,13 @@ class Request():
             print("Star not found. Error 2.")
 
 
+    def computeTimeRequest_RM(self):
+        self.total_observations_requested = self.n_observations_per_visit*self.n_visits_per_night*self.n_unique_nights_per_semester
+        self.overhead_per_unique_night = 0.0
+        self.time_per_unique_night = self.eventWindow
+        self.total_time_for_target_seconds = self.eventWindow*3600
+        self.total_time_for_target_hours = self.eventWindow
+
     def computeTimeRequest(self):
         # Do not change these values.
         readout_time = 45 #seconds
@@ -174,8 +187,8 @@ class Request():
         else_min_alt = 25
         max_alt = 85
 
-        twilight_frame = pd.read_csv("twilight_times_2024A.csv")
-        coords = apy.coordinates.SkyCoord(self.RA * u.hourangle, self.Dec * u.deg, frame='icrs')
+        twilight_frame = pd.read_csv("/Users/jack/Documents/Github/CadenceWebform/twilight_times_2024A.csv")
+        coords = apy.coordinates.SkyCoord(self.RA * u.deg, self.Dec * u.deg, frame='icrs')
         target = apl.FixedTarget(name=self.simbad_name, coord=coords)
 
         semesterly_observability_matrix = []
@@ -270,7 +283,12 @@ class Request():
                          "N_visits_per_night":self.n_visits_per_night,
                          "N_unique_nights_per_semester":self.n_unique_nights_per_semester,
                          "Intra-night cadence":self.intra_night_cadence,
-                         "Inter-night cadence":self.inter_night_cadence
+                         "Inter-night cadence":self.inter_night_cadence,
+                         # These are note included because it is ok if they are still set to "None"
+                         # "Start Date":self.startDate,
+                         # "End Date":self.endDate,
+                         # "Must Date":self.mustDate,
+                         # "Notes":self.notes,
                         }
 
         keys = allattributes.keys()
@@ -279,6 +297,14 @@ class Request():
             if allattributes[k] == None:
                 print(str(k) + " is None.")
                 self.notNones = False
+        if self.startDate == None:
+            self.startDate = ''
+        if self.endDate == None:
+            self.endDate = ''
+        if self.mustDate == None:
+            self.mustDate = ''
+        if self.notes == None:
+            self.notes = ''
 
         print()
         print("Checking for correct data types.")
@@ -298,6 +324,15 @@ class Request():
             self.goodTypes = False
         if isinstance(self.inter_night_cadence, int) == False:
             print("Inter_night_cadence must be an integer. Fix before continuing")
+            self.goodTypes = False
+        if isinstance(self.startDate, str) == False:
+            print("startDate must be a string. Fix before continuing")
+            self.goodTypes = False
+        if isinstance(self.endDate, str) == False:
+            print("endDate must be a string. Fix before continuing")
+            self.goodTypes = False
+        if isinstance(self.notes, str) == False:
+            print("notes must be a string. Fix before continuing")
             self.goodTypes = False
 
         print()
@@ -381,7 +416,7 @@ class Program():
         if self.allGood:
 
             with open(self.savefile,'w') as fileout:
-                fileout.write("Name,Gaia_ID,TIC_ID,Program_Code,RA,Dec,pmRA,pmDec,Epoch,Jmag,Teff,Nominal_ExpTime,Max_ExpTime,Simulcal,Total_Observations_Requested,N_Observations_per_Visit,N_Visits_per_Night,Intra_Night_Cadence,N_Unique_Nights,Inter_Night_Cadence,Total_Time_for_Target_Seconds,Total_Time_for_Target_Hours" + "\n")
+                fileout.write("Name,Gaia_ID,TIC_ID,Program_Code,RA,Dec,pmRA,pmDec,Epoch,Jmag,Teff,Nominal_ExpTime,Max_ExpTime,Simulcal,Total_Observations_Requested,N_Observations_per_Visit,N_Visits_per_Night,Intra_Night_Cadence,N_Unique_Nights,Inter_Night_Cadence,Total_Time_for_Target_Seconds,Total_Time_for_Target_Hours,Start_Date,End_Date,Must_Dates,Notes" + "\n")
 
                 for r in range(len(self.requests)):
 
@@ -395,7 +430,9 @@ class Program():
                     str(self.requests[r].total_observations_requested) + "," + str(self.requests[r].n_observations_per_visit) + "," + \
                     str(self.requests[r].n_visits_per_night) + "," + str(self.requests[r].intra_night_cadence) + "," + \
                     str(self.requests[r].n_unique_nights_per_semester) + "," + str(self.requests[r].inter_night_cadence) + "," + \
-                    str(self.requests[r].total_time_for_target_seconds) + "," + str(self.requests[r].total_time_for_target_hours)
+                    str(self.requests[r].total_time_for_target_seconds) + "," + str(self.requests[r].total_time_for_target_hours) + "," + \
+                    str(self.requests[r].startDate) + "," + str(self.requests[r].endDate) + "," + str(self.requests[r].mustDate) + "," + \
+                    str(self.requests[r].notes)
 
                     print(line)
                     print()
